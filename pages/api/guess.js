@@ -1,8 +1,6 @@
 // pages/api/guess.js
-import { kv } from '@vercel/kv';
-import { getOrCreateGame } from './state';
+import { getOrCreateGame, saveGame } from './state';
 
-const GAME_KEY = 'number-duel-game';
 const DIGITS = 4;
 const MAX_GUESSES = 6;
 
@@ -82,7 +80,7 @@ export default async function handler(req, res) {
     }
   }
 
-  await kv.set(GAME_KEY, game);
+  await saveGame(game);
 
   return res.status(200).json({
     success: true,

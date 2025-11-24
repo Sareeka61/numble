@@ -22,7 +22,7 @@ function Board({ guesses, visible }) {
                   const color = guess.colors[colIdx];
                   if (color) tileClasses.push(color);
                 } else {
-                  // hidden view: show dimmed tiles if that row used
+                  // hidden view for opponent: empty tiles but slightly dim if row used
                   tileClasses.push('hidden-tile');
                   if (guess.value[colIdx]) tileClasses.push('used');
                 }
@@ -65,12 +65,7 @@ export default function Home() {
       }
     }
     fetchState();
-
-    // Poll every 2s until game over
-    const interval = setInterval(() => {
-      fetchState();
-    }, 2000);
-
+    const interval = setInterval(fetchState, 2000);
     return () => {
       cancelled = true;
       clearInterval(interval);
@@ -104,7 +99,6 @@ export default function Home() {
       } else {
         setGuess('');
         setMsg('');
-        // Trigger an immediate state refresh
         setRefreshTick((x) => x + 1);
         if (data.gameOver) {
           setMsg(
@@ -140,6 +134,7 @@ export default function Home() {
   const myGuesses = state?.myGuesses || [];
   const myGuessCount = state?.myGuessCount || 0;
   const otherGuessCount = state?.otherGuessCount || 0;
+  const otherGuesses = state?.otherGuesses || [];
   const gameOver = state?.gameOver;
   const winner = state?.winner;
   const target = state?.targetRevealed;
@@ -149,12 +144,12 @@ export default function Home() {
       <div className="card">
         <div className="header">
           <div>
-            <div className="title">Number Duel</div>
+            <div className="title">NUMBER DUEL</div>
             <div className="subtitle">
               Two players, one secret 4-digit code. First to crack it wins.
             </div>
           </div>
-          <div className="badge">2 Players</div>
+          <div className="badge">2 PLAYERS</div>
         </div>
 
         <div className="view-switch">
@@ -185,7 +180,7 @@ export default function Home() {
         </div>
 
         <div className="players-layout">
-          {/* My box */}
+          {/* Your board */}
           <div className="player-column">
             <div className="player-column-header">
               <span className="name">Player {playerId} (You)</span>
@@ -199,7 +194,7 @@ export default function Home() {
             <Board guesses={myGuesses} visible={true} />
           </div>
 
-          {/* Other player's box */}
+          {/* Opponent board */}
           <div className="player-column">
             <div className="player-column-header">
               <span className="name">Player {otherPlayerId}</span>
@@ -210,17 +205,10 @@ export default function Home() {
             <div className="player-guess-count">
               Guesses used: {otherGuessCount} / {MAX_GUESSES}
             </div>
-            <Board
-              guesses={
-                // show full board only after game over,
-                // otherwise show only used-row hints
-                gameOver ? state?.myGuesses /* placeholder */ : []
-              }
-              visible={gameOver}
-            />
+            <Board guesses={otherGuesses} visible={!!gameOver} />
             {!gameOver && (
               <div className="small-note">
-                Numbers are hidden until the round ends.
+                Numbers and colors are hidden until the round ends.
               </div>
             )}
           </div>
@@ -263,14 +251,14 @@ export default function Home() {
         </div>
       </div>
 
-      {/* Styles (same vibe as before) */}
+      {/* Wordle-style styling */}
       <style jsx>{`
         :global(body) {
           margin: 0;
           padding: 0;
           font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI',
             sans-serif;
-          background: radial-gradient(circle at top, #1f2937, #020617);
+          background: radial-gradient(circle at top, #020617, #020617 40%, #000);
           color: #e5e7eb;
           min-height: 100vh;
           display: flex;
@@ -279,7 +267,7 @@ export default function Home() {
         }
         .game-wrapper {
           width: 100%;
-          max-width: 880px;
+          max-width: 900px;
           padding: 16px;
         }
         .card {
@@ -287,7 +275,7 @@ export default function Home() {
           border-radius: 18px;
           padding: 20px 18px 16px;
           box-shadow: 0 20px 40px rgba(0, 0, 0, 0.6);
-          border: 1px solid rgba(148, 163, 184, 0.25);
+          border: 1px solid rgba(148, 163, 184, 0.3);
         }
         .header {
           display: flex;
@@ -298,18 +286,18 @@ export default function Home() {
         .title {
           font-size: 1.3rem;
           font-weight: 700;
-          letter-spacing: 0.09em;
+          letter-spacing: 0.14em;
           text-transform: uppercase;
         }
         .subtitle {
-          font-size: 0.78rem;
+          font-size: 0.8rem;
           color: #9ca3af;
         }
         .badge {
           font-size: 0.7rem;
           padding: 3px 9px;
           border-radius: 999px;
-          background: rgba(56, 189, 248, 0.1);
+          background: rgba(56, 189, 248, 0.12);
           border: 1px solid rgba(56, 189, 248, 0.7);
           color: #e0f2fe;
           text-transform: uppercase;
@@ -341,7 +329,7 @@ export default function Home() {
         .view-info {
           font-size: 0.78rem;
           color: #9ca3af;
-          margin-bottom: 8px;
+          margin-bottom: 10px;
         }
         .view-info span {
           color: #38bdf8;
@@ -350,13 +338,14 @@ export default function Home() {
         .players-layout {
           display: grid;
           grid-template-columns: 1fr 1fr;
-          gap: 12px;
+          gap: 14px;
+          margin-bottom: 10px;
         }
         .player-column {
           border-radius: 14px;
-          border: 1px solid rgba(148, 163, 184, 0.35);
+          border: 1px solid rgba(148, 163, 184, 0.4);
           padding: 10px 10px 8px;
-          background: radial-gradient(circle at top, #0b1120, #020617);
+          background: radial-gradient(circle at top, #020617, #020617);
         }
         .player-column-header {
           display: flex;
@@ -372,7 +361,7 @@ export default function Home() {
           font-size: 0.7rem;
           padding: 2px 8px;
           border-radius: 999px;
-          background: rgba(34, 197, 94, 0.1);
+          background: rgba(34, 197, 94, 0.16);
           border: 1px solid rgba(34, 197, 94, 0.7);
           color: #bbf7d0;
         }
@@ -384,44 +373,44 @@ export default function Home() {
         .board {
           display: grid;
           grid-template-rows: repeat(6, 1fr);
-          gap: 6px;
+          gap: 4px;
         }
         .row {
           display: grid;
           grid-template-columns: repeat(4, 1fr);
-          gap: 6px;
+          gap: 4px;
         }
         .tile {
           width: 100%;
           aspect-ratio: 1 / 1;
-          border-radius: 10px;
+          border-radius: 4px;
           display: flex;
           align-items: center;
           justify-content: center;
-          font-weight: 600;
+          font-weight: 700;
           font-size: 1.4rem;
-          background: #1f2937;
+          background: #020617;
           color: #e5e7eb;
-          border: 1px solid rgba(148, 163, 184, 0.3);
-          transition: transform 0.12s ease, background 0.12s ease,
-            border 0.12s ease, box-shadow 0.12s ease;
+          border: 2px solid #4b5563;
+          box-sizing: border-box;
         }
         .tile.filled {
-          transform: scale(1.02);
+          border-color: #9ca3af;
         }
         .tile.correct {
           background: #22c55e;
-          border-color: rgba(22, 163, 74, 0.9);
-          box-shadow: 0 0 10px rgba(22, 163, 74, 0.7);
+          border-color: #16a34a;
+          color: #f9fafb;
         }
         .tile.present {
           background: #eab308;
-          border-color: rgba(202, 138, 4, 0.9);
-          box-shadow: 0 0 10px rgba(202, 138, 4, 0.7);
+          border-color: #ca8a04;
+          color: #111827;
         }
         .tile.absent {
           background: #4b5563;
-          border-color: rgba(55, 65, 81, 0.9);
+          border-color: #374151;
+          color: #e5e7eb;
         }
         .hidden-tile.used {
           opacity: 0.3;
@@ -435,7 +424,7 @@ export default function Home() {
         .controls input {
           flex: 1;
           padding: 10px 10px;
-          border-radius: 10px;
+          border-radius: 8px;
           border: 1px solid rgba(148, 163, 184, 0.5);
           background: #020617;
           color: #e5e7eb;
@@ -451,7 +440,7 @@ export default function Home() {
         }
         button {
           border: none;
-          border-radius: 10px;
+          border-radius: 8px;
           padding: 10px 12px;
           font-size: 0.9rem;
           font-weight: 600;
@@ -464,7 +453,7 @@ export default function Home() {
         }
         button:hover:not(:disabled) {
           transform: translateY(-1px);
-          box-shadow: 0 10px 20px rgba(22, 163, 74, 0.5);
+          box-shadow: 0 8px 18px rgba(22, 163, 74, 0.5);
           filter: brightness(1.04);
         }
         button:active:not(:disabled) {
