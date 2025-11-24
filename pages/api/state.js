@@ -1,14 +1,10 @@
 // pages/api/state.js
-import { kv } from '@vercel/kv';
 
-const GAME_KEY = 'number-duel-game';
+const GAME_KEY = 'number-duel-game'; // not really needed now, but kept
 const DIGITS = 4;
 const MAX_GUESSES = 6;
 
-// if these are missing, use in-memory game (for local dev)
-const USE_MEMORY =
-  !process.env.KV_REST_API_URL || !process.env.KV_REST_API_TOKEN;
-
+// Single in-memory game object (works fine for a toy game)
 let memoryGame = null;
 
 function randomDigit() {
@@ -31,25 +27,14 @@ export function createNewGameState() {
 }
 
 export async function getOrCreateGame() {
-  if (USE_MEMORY) {
-    if (!memoryGame) memoryGame = createNewGameState();
-    return memoryGame;
+  if (!memoryGame) {
+    memoryGame = createNewGameState();
   }
-
-  let game = await kv.get(GAME_KEY);
-  if (!game) {
-    game = createNewGameState();
-    await kv.set(GAME_KEY, game);
-  }
-  return game;
+  return memoryGame;
 }
 
 export async function saveGame(game) {
-  if (USE_MEMORY) {
-    memoryGame = game;
-  } else {
-    await kv.set(GAME_KEY, game);
-  }
+  memoryGame = game;
 }
 
 export default async function handler(req, res) {
